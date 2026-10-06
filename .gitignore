@@ -1,0 +1,27 @@
+*
+
+# git / repo / meta
+!.gitignore
+!README.org
+
+# repo configuration
+!pyproject.toml
+!uv.lock
+
+# src
+!src/
+!src/**/
+!src/**/*.py
+
+# tests
+!tests/
+!tests/**/
+!tests/**/*.py
+
+# docs
+!docs/
+!docs/**
+
+# reports
+!reports/
+!reports/**

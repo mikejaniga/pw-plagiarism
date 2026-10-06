@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Text Similarity Visualization (Multi-Document Plagiarism View)</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f9;
+            color: #2c3e50;
+        }
+        header {
+            background: #1a252f;
+            color: #ffffff;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            background: #2c3e50;
+            padding: 6px 14px;
+            border-radius: 6px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .badge-color { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+        .color-high { background-color: #ff7675; }
+        .color-mid { background-color: #ffeaa7; }
+        .color-active { background-color: #74b9ff; border: 2px solid #0984e3; }
+
+        .info-panel {
+            background: #ffffff;
+            border-bottom: 1px solid #dcdde1;
+            padding: 10px 24px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #match-details {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            padding: 16px;
+            height: calc(100vh - 125px);
+            overflow: hidden;
+        }
+        .document-column {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e1e8ed;
+        }
+        .doc-header {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e1e8ed;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .doc-header h3 {
+            margin: 0 0 4px 0;
+            font-size: 14px;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .doc-filename { font-size: 11px; color: #64748b; display: block; }
+        .doc-stats { font-size: 11px; color: #0284c7; font-weight: 500; display: block; margin-top: 2px; }
+
+        .doc-body {
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .sentence-item {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 5px;
+            line-height: 1.45;
+            font-size: 13px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sentence-item:hover {
+            background-color: #f1f5f9;
+        }
+        .sent-num {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+
+        /* Highlight styles */
+        .highlight-high {
+            background-color: #ffebee !important;
+            border-left: 4px solid #e53935 !important;
+        }
+        .highlight-mid {
+            background-color: #fffde7 !important;
+            border-left: 4px solid #fbc02d !important;
+        }
+        .selected-active {
+            background-color: #e0f2fe !important;
+            border: 2px solid #0284c7 !important;
+            box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
+        }
+        .connected-match {
+            background-color: #fce4ec !important;
+            border: 2px solid #d81b60 !important;
+            box-shadow: 0 0 8px rgba(216, 27, 96, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Plagiarism Detection System — Simultaneous Visualization of 4 Texts</h1>
+        <div class="legend">
+            <div class="legend-item"><span class="badge-color color-high"></span> High similarity (&gt;=85%)</div>
+            <div class="legend-item"><span class="badge-color color-mid"></span> Moderate similarity (72-84%)</div>
+            <div class="legend-item"><span class="badge-color color-active"></span> Clicked sentence / Connections</div>
+        </div>
+    </header>
+
+    <div class="info-panel">
+        <span id="match-details">Click any sentence to highlight its counterparts across all texts.</span>
+        <button onclick="resetHighlights()" style="padding: 4px 10px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; background: #fff;">Clear selection</button>
+    </div>
+
+    <div class="container">
+        
+            <div class="document-column" style="width: 25.0%;">
+                <div class="doc-header">
+                    <h3>Artykul 1 Pap</h3>
+                    <span class="doc-filename">artykul_1_pap.txt</span>
+                    <span class="doc-stats">Sentence count: 11</span>
+                </div>
+                <div class="doc-body">
+                    <div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="0" onclick="handleSentenceClick(this)"><span class="sent-num">#1</span> Polska Agencja Prasowa: Polski astronauta poleci na Międzynarodową Stację Kosmiczną.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="1" onclick="handleSentenceClick(this)"><span class="sent-num">#2</span> Europejska Agencja Kosmiczna (ESA) wraz z Ministerstwem Rozwoju i Technologii oficjalnie podpisały porozumienie w sprawie misji polskiego astronauty na Międzynarodową Stację Kosmiczną (ISS).</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="2" onclick="handleSentenceClick(this)"><span class="sent-num">#3</span> Polak weźmie udział w misji technologicznej i przeprowadzi na orbicie kilkanaście zaawansowanych eksperymentów opracowanych przez rodzime uczelnie oraz instytuty badawcze.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="3" onclick="handleSentenceClick(this)"><span class="sent-num">#4</span> Jak przekazał szef resortu rozwoju, podpisana umowa zabezpiecza finansowanie przygotowań i kompleksowego treningu kandydata.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="4" onclick="handleSentenceClick(this)"><span class="sent-num">#5</span> &quot;To historyczny moment dla polskiego sektora kosmicznego.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="5" onclick="handleSentenceClick(this)"><span class="sent-num">#6</span> Po ponad czterdziestu latach od lotu Mirosława Hermaszewskiego nasz rodak ponownie znajdzie się na orbicie okołoziemskiej&quot; – podkreślił minister podczas uroczystej konferencji prasowej w Warszawie.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="6" onclick="handleSentenceClick(this)"><span class="sent-num">#7</span> W ramach porozumienia polski inżynier projektowy ma przejść rygorystyczny program szkoleniowy w ośrodku szkolenia astronautów w Kolonii.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="7" onclick="handleSentenceClick(this)"><span class="sent-num">#8</span> Misja ma zostać zrealizowana we współpracy z amerykańską firmą Axiom Space w drugiej połowie 2024 roku.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="8" onclick="handleSentenceClick(this)"><span class="sent-num">#9</span> Kluczowym elementem ekspedycji będą badania nad wpływem mikrograwitacji na ludzkie komórki oraz testy innowacyjnych materiałów kompozytowych w warunkach próżni kosmicznej.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="9" onclick="handleSentenceClick(this)"><span class="sent-num">#10</span> Polska zwiększyła również swoją składkę do Europejskiej Agencji Kosmicznej o 295 milionów euro.</div><div class="sentence-item" data-doc="artykul_1_pap.txt" data-idx="10" onclick="handleSentenceClick(this)"><span class="sent-num">#11</span> Środki te w przeważającej mierze powrócą do krajowego przemysłu w postaci strategicznych kontraktów technologicznych.</div>
+                </div>
+            </div>
+            
+            <div class="document-column" style="width: 25.0%;">
+                <div class="doc-header">
+                    <h3>Artykul 2 Portal A</h3>
+                    <span class="doc-filename">artykul_2_portal_a.txt</span>
+                    <span class="doc-stats">Sentence count: 14</span>
+                </div>
+                <div class="doc-body">
+                    <div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="0" onclick="handleSentenceClick(this)"><span class="sent-num">#1</span> Portal Informacyjny Wiadomości: Polak leci w kosmos!</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="1" onclick="handleSentenceClick(this)"><span class="sent-num">#2</span> Historyczne porozumienie z ESA podpisane.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="2" onclick="handleSentenceClick(this)"><span class="sent-num">#3</span> To już oficjalne: polski astronauta poleci na Międzynarodową Stację Kosmiczną ISS.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="3" onclick="handleSentenceClick(this)"><span class="sent-num">#4</span> We wtorek w Warszawie przedstawiciele Europejskiej Agencji Kosmicznej oraz Ministerstwa Rozwoju i Technologii podpisali ostateczne porozumienie regulujące zasady polskiej misji orbitalnej.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="4" onclick="handleSentenceClick(this)"><span class="sent-num">#5</span> Polski naukowiec zrealizuje na orbicie serię kilkunastu eksperymentów przygotowanych przez polskich naukowców.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="5" onclick="handleSentenceClick(this)"><span class="sent-num">#6</span> Szef resortu rozwoju nie krył dumy z osiągniętego sukcesu.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="6" onclick="handleSentenceClick(this)"><span class="sent-num">#7</span> &quot;To historyczny moment dla polskiego sektora kosmicznego.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="7" onclick="handleSentenceClick(this)"><span class="sent-num">#8</span> Po ponad czterdziestu latach od lotu Mirosława Hermaszewskiego nasz rodak ponownie znajdzie się na orbicie okołoziemskiej&quot; – oświadczył minister na zwołanej konferencji prasowej.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="8" onclick="handleSentenceClick(this)"><span class="sent-num">#9</span> Przygotowania do lotu obejmą intensywne szkolenie astronauty w europejskim centrum w Kolonii.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="9" onclick="handleSentenceClick(this)"><span class="sent-num">#10</span> Całe przedsięwzięcie zostanie zrealizowane przy ścisłej współpracy z prywatnym amerykańskim przedsiębiorstwem Axiom Space.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="10" onclick="handleSentenceClick(this)"><span class="sent-num">#11</span> Start komercyjnej rakiety planowany jest na drugą połowę 2024 roku.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="11" onclick="handleSentenceClick(this)"><span class="sent-num">#12</span> W kosmosie Polak przetestuje zachowanie nowatorskich materiałów kompozytowych w próżni i sprawdzi wpływ stanu nieważkości na komórki.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="12" onclick="handleSentenceClick(this)"><span class="sent-num">#13</span> Warto przypomnieć, że polski rząd podjął decyzję o powiększeniu wkładu finansowego do budżetu ESA aż o 295 milionów euro.</div><div class="sentence-item" data-doc="artykul_2_portal_a.txt" data-idx="13" onclick="handleSentenceClick(this)"><span class="sent-num">#14</span> Te gigantyczne fundusze mają zasilić rodzime firmy technologiczne i otworzyć im drzwi do międzynarodowych przetargów.</div>
+                </div>
+            </div>
+            
+            <div class="document-column" style="width: 25.0%;">
+                <div class="doc-header">
+                    <h3>Artykul 3 Portal B</h3>
+                    <span class="doc-filename">artykul_3_portal_b.txt</span>
+                    <span class="doc-stats">Sentence count: 10</span>
+                </div>
+                <div class="doc-body">
+                    <div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="0" onclick="handleSentenceClick(this)"><span class="sent-num">#1</span> Serwis Gospodarczy TechTrend: Polska misja na ISS potwierdzona.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="1" onclick="handleSentenceClick(this)"><span class="sent-num">#2</span> Rząd dołoży miliony do technologii kosmicznych.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="2" onclick="handleSentenceClick(this)"><span class="sent-num">#3</span> W Warszawie przypieczętowano umowę otwierającą drogę do lotu drugiego w historii Polaka na orbitę.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="3" onclick="handleSentenceClick(this)"><span class="sent-num">#4</span> Europejska Agencja Kosmiczna (ESA) zacieśnia współpracę z Warszawą, w wyniku czego polski reprezentant poleci na Międzynarodową Stację Kosmiczną i przetestuje krajowe innowacje.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="4" onclick="handleSentenceClick(this)"><span class="sent-num">#5</span> Resort rozwoju poinformował, że podpisana umowa zabezpiecza finansowanie przygotowań i kompleksowego treningu kandydata.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="5" onclick="handleSentenceClick(this)"><span class="sent-num">#6</span> Misja ma zostać zrealizowana we współpracy z amerykańską firmą Axiom Space w drugiej połowie 2024 roku.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="6" onclick="handleSentenceClick(this)"><span class="sent-num">#7</span> Podstawowym celem wyjazdu jest wdrożenie testów rodzimej aparatury medycznej oraz badanie odporności nowoczesnych stopów metali w przestrzeni kosmicznej.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="7" onclick="handleSentenceClick(this)"><span class="sent-num">#8</span> Finansową podstawą porozumienia jest znaczący wzrost zaangażowania budżetu państwa.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="8" onclick="handleSentenceClick(this)"><span class="sent-num">#9</span> Polska zwiększyła swoją składkę do Europejskiej Agencji Kosmicznej o 295 milionów euro, co ma stanowić bezpośredni impuls rozwojowy dla polskiego przemysłu wysokich technologii.</div><div class="sentence-item" data-doc="artykul_3_portal_b.txt" data-idx="9" onclick="handleSentenceClick(this)"><span class="sent-num">#10</span> Polskie podmioty gospodarcze zyskają bezprecedensowy dostęp do europejskich łańcuchów dostaw w programach eksploracji kosmosu.</div>
+                </div>
+            </div>
+            
+            <div class="document-column" style="width: 25.0%;">
+                <div class="doc-header">
+                    <h3>Artykul 4 Opinia</h3>
+                    <span class="doc-filename">artykul_4_opinia.txt</span>
+                    <span class="doc-stats">Sentence count: 8</span>
+                </div>
+                <div class="doc-body">
+                    <div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="0" onclick="handleSentenceClick(this)"><span class="sent-num">#1</span> Tygodnik Komentarze: Czy lot drugiego Polaka w kosmos to racjonalny wydatek, czy polityczny spektakl?</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="1" onclick="handleSentenceClick(this)"><span class="sent-num">#2</span> Decyzja o wysłaniu reprezentanta Polski na stację orbitalną wywołała ożywioną dyskusję w kręgach naukowych i ekonomicznych.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="2" onclick="handleSentenceClick(this)"><span class="sent-num">#3</span> Choć entuzjaści świętują przełom i nawiązują do legendarnej wyprawy z czasów PRL, sceptycy zadają niewygodne pytania o realny zwrot z tej kosztownej inwestycji.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="3" onclick="handleSentenceClick(this)"><span class="sent-num">#4</span> Rząd deklaruje, że dodatkowa składka w wysokości setek milionów euro zaprocentuje napływem intratnych zamówień dla polskich inżynierów.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="4" onclick="handleSentenceClick(this)"><span class="sent-num">#5</span> Rzeczywistość zamówień publicznych w sektorze aerokosmicznym bywa jednak znacznie bardziej skomplikowana.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="5" onclick="handleSentenceClick(this)"><span class="sent-num">#6</span> Zbudowanie trwałej pozycji wymaga wieloletnich nakładów na badania podstawowe, a nie jedynie jednorazowej obecności medialnej na pokładzie kapsuły.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="6" onclick="handleSentenceClick(this)"><span class="sent-num">#7</span> Bez wątpienia obecność polskiego naukowca na stacji badawczej wzbudzi zainteresowanie młodzieży naukami ścisłymi.</div><div class="sentence-item" data-doc="artykul_4_opinia.txt" data-idx="7" onclick="handleSentenceClick(this)"><span class="sent-num">#8</span> Czas pokaże, czy za symbolicznym gestem pójdą trwałe programy przemysłowe, czy też cała inicjatywa pozostanie jedynie drogim epizodem promocyjnym obecnej ekipy rządzącej.</div>
+                </div>
+            </div>
+            
+    </div>
+
+    <script>
+        const matches = [{"doc_a": "artykul_1_pap.txt", "idx_a": 7, "doc_b": "artykul_3_portal_b.txt", "idx_b": 5, "score_ens": 1.0, "score_m1": 1.0, "score_m2": 1.0}, {"doc_a": "artykul_1_pap.txt", "idx_a": 4, "doc_b": "artykul_2_portal_a.txt", "idx_b": 6, "score_ens": 1.0, "score_m1": 1.0, "score_m2": 1.0}, {"doc_a": "artykul_1_pap.txt", "idx_a": 3, "doc_b": "artykul_3_portal_b.txt", "idx_b": 4, "score_ens": 0.985, "score_m1": 0.993, "score_m2": 0.976}, {"doc_a": "artykul_1_pap.txt", "idx_a": 5, "doc_b": "artykul_2_portal_a.txt", "idx_b": 7, "score_ens": 0.978, "score_m1": 0.994, "score_m2": 0.958}, {"doc_a": "artykul_1_pap.txt", "idx_a": 9, "doc_b": "artykul_3_portal_b.txt", "idx_b": 8, "score_ens": 0.96, "score_m1": 0.953, "score_m2": 0.969}, {"doc_a": "artykul_1_pap.txt", "idx_a": 9, "doc_b": "artykul_2_portal_a.txt", "idx_b": 12, "score_ens": 0.844, "score_m1": 0.859, "score_m2": 0.825}, {"doc_a": "artykul_1_pap.txt", "idx_a": 1, "doc_b": "artykul_2_portal_a.txt", "idx_b": 3, "score_ens": 0.84, "score_m1": 0.849, "score_m2": 0.828}, {"doc_a": "artykul_1_pap.txt", "idx_a": 0, "doc_b": "artykul_2_portal_a.txt", "idx_b": 2, "score_ens": 0.835, "score_m1": 0.947, "score_m2": 0.699}, {"doc_a": "artykul_1_pap.txt", "idx_a": 2, "doc_b": "artykul_2_portal_a.txt", "idx_b": 4, "score_ens": 0.807, "score_m1": 0.897, "score_m2": 0.697}, {"doc_a": "artykul_2_portal_a.txt", "idx_a": 12, "doc_b": "artykul_3_portal_b.txt", "idx_b": 8, "score_ens": 0.806, "score_m1": 0.807, "score_m2": 0.806}, {"doc_a": "artykul_1_pap.txt", "idx_a": 1, "doc_b": "artykul_3_portal_b.txt", "idx_b": 3, "score_ens": 0.777, "score_m1": 0.79, "score_m2": 0.762}, {"doc_a": "artykul_1_pap.txt", "idx_a": 0, "doc_b": "artykul_3_portal_b.txt", "idx_b": 0, "score_ens": 0.759, "score_m1": 0.742, "score_m2": 0.781}, {"doc_a": "artykul_1_pap.txt", "idx_a": 6, "doc_b": "artykul_2_portal_a.txt", "idx_b": 8, "score_ens": 0.751, "score_m1": 0.803, "score_m2": 0.686}, {"doc_a": "artykul_1_pap.txt", "idx_a": 8, "doc_b": "artykul_2_portal_a.txt", "idx_b": 11, "score_ens": 0.744, "score_m1": 0.789, "score_m2": 0.689}, {"doc_a": "artykul_2_portal_a.txt", "idx_a": 3, "doc_b": "artykul_3_portal_b.txt", "idx_b": 2, "score_ens": 0.725, "score_m1": 0.767, "score_m2": 0.674}];
+
+        // Mark sentences that have any match
+        document.addEventListener('DOMContentLoaded', () => {
+            matches.forEach(m => {
+                markSentence(m.doc_a, m.idx_a, m.score_ens);
+                markSentence(m.doc_b, m.idx_b, m.score_ens);
+            });
+        });
+
+        function markSentence(docName, idx, score) {
+            const el = document.querySelector(`.sentence-item[data-doc="${docName}"][data-idx="${idx}"]`);
+            if (el) {
+                if (score >= 0.85) {
+                    el.classList.add('highlight-high');
+                } else if (!el.classList.contains('highlight-high')) {
+                    el.classList.add('highlight-mid');
+                }
+            }
+        }
+
+        function handleSentenceClick(element) {
+            resetSelectionOnly();
+
+            const docName = element.getAttribute('data-doc');
+            const idx = parseInt(element.getAttribute('data-idx'));
+
+            element.classList.add('selected-active');
+
+            // Find connections
+            const related = [];
+            matches.forEach(m => {
+                if (m.doc_a === docName && m.idx_a === idx) {
+                    related.push({ targetDoc: m.doc_b, targetIdx: m.idx_b, score: m.score_ens, m1: m.score_m1, m2: m.score_m2 });
+                } else if (m.doc_b === docName && m.idx_b === idx) {
+                    related.push({ targetDoc: m.doc_a, targetIdx: m.idx_a, score: m.score_ens, m1: m.score_m1, m2: m.score_m2 });
+                }
+            });
+
+            const detailsSpan = document.getElementById('match-details');
+            if (related.length === 0) {
+                detailsSpan.innerHTML = `Selected sentence has no detected borrowings above the similarity threshold.`;
+                return;
+            }
+
+            let infoText = `<strong>Selected sentence has ${related.length} connection(s):</strong> `;
+            related.forEach(r => {
+                const targetEl = document.querySelector(`.sentence-item[data-doc="${r.targetDoc}"][data-idx="${r.targetIdx}"]`);
+                if (targetEl) {
+                    targetEl.classList.add('connected-match');
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                infoText += `[${r.targetDoc} #sentence ${r.targetIdx + 1} -> Ensemble: <b>${(r.score * 100).toFixed(1)}%</b> (M1: ${(r.m1 * 100).toFixed(1)}%, M2: ${(r.m2 * 100).toFixed(1)}%)] `;
+            });
+
+            detailsSpan.innerHTML = infoText;
+        }
+
+        function resetSelectionOnly() {
+            document.querySelectorAll('.selected-active').forEach(el => el.classList.remove('selected-active'));
+            document.querySelectorAll('.connected-match').forEach(el => el.classList.remove('connected-match'));
+        }
+
+        function resetHighlights() {
+            resetSelectionOnly();
+            document.getElementById('match-details').innerText = "Click any sentence to highlight its counterparts across all texts.";
+        }
+    </script>
+</body>
+</html>
