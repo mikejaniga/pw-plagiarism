@@ -3,6 +3,7 @@
 # git / repo / meta
 !.gitignore
 !README.org
+!LICENSE
 
 # repo configuration
 !pyproject.toml
