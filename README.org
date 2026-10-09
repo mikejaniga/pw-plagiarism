@@ -6,7 +6,7 @@
 
 The project implements a comprehensive environment for detecting borrowings, verbatim copies, and paraphrases across any number of text documents.
 
-You can view the interactive comparison here: 👉 [[file:docs/index.html][report]]
+You can view the interactive comparison here: 👉 [[https://mikejaniga.github.io/pw-plagiarism/][report]]
 
 * Solution Architecture
 
