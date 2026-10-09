@@ -6,6 +6,8 @@
 
 The project implements a comprehensive environment for detecting borrowings, verbatim copies, and paraphrases across any number of text documents.
 
+You can view the interactive comparison here: 👉 [[file:docs/index.html][report]]
+
 * Solution Architecture
 
 The following diagram presents the data flow and the architecture of the language model fusion in the detector pipeline.
@@ -81,7 +83,7 @@ end
 
 1. *Ability to compare any number of files:*
    - Loading files from a directory (~DataLoader.load_directory~), automatic segmentation into sentences, relational comparison of document pairs and sentence fragments.
-2. *Summary in the form of an Excel spreadsheet (~.xlsx~):*
+2. *Summary in the form of an Excel spreadsheet:*
    - Sheet 1: *Pair Summary* (scoring table, risk assessment, text coverage).
    - Sheet 2: *Similarity Matrices* (interactive heatmaps with gradient coloring in Excel for Model 1, Model 2, and Ensemble).
    - Sheet 3: *Detected Fragments* (a listing of borrowed sentences with exact metrics for each model).
@@ -89,7 +91,7 @@ end
 3. *Comparison of 2 language models and investigation of their combination:*
    - *Model 1:* ~sdadas/st-polish-paraphrase-from-distilroberta~ – a model fine-tuned specifically for detecting Polish paraphrases.
    - *Model 2:* ~sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2~ – an optimized multilingual bi-encoder model.
-   - *Ensemble (Combination):* Linear vector fusion \(S_{ensemble} = \alpha \cdot S_{M1} + (1 - \alpha) \cdot S_{M2}\). The fusion eliminates /False Positive/ errors resulting from purely thematic convergence as well as /False Negative/ errors in the case of rare vocabulary and proper names.
+   - *Ensemble (Combination):* Linear vector fusion (S_{ensemble} = \alpha \cdot S_{M1} + (1 - \alpha) \cdot S_{M2}). The fusion eliminates /False Positive/ errors resulting from purely thematic convergence as well as /False Negative/ errors in the case of rare vocabulary and proper names.
 4. *Visualizations of similarities between 2–4 texts simultaneously:*
    - A static triple correlation matrix (~similarity_matrix.png~).
    - An interactive Side-by-Side dashboard (~text_comparison.html~) enabling simultaneous viewing of up to 4 articles, with synchronous highlighting of related fragments after clicking any sentence.
